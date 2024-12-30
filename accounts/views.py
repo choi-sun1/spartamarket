@@ -1,40 +1,74 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
-from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm
-# Create your views here.
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordChangeForm,
+)
+from django.views.decorators.http import require_POST, require_http_methods
+from .forms import CustomUserChangeForm, CustomUserCreationForm 
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 
+def login(request):
+    if request.method == "POST":
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            path = request.GET.get("next") or "index"
+            return redirect(path)
+    else:
+        form = AuthenticationForm()
+    context = {"form": form}
+    return render(request, "accounts/login.html", context)
 
+@require_POST
+def logout(request):
+    if request.user.is_authenticated:
+        auth_logout(request)
+    return redirect("index")
+
+@require_http_methods(["GET", "POST"])
 def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # 회원가입 후 자동 로그인
-            return redirect('home')  # 'home' URL로 리다이렉트 (적절히 수정)
+            auth_login(request, user)
+            return redirect("index")
     else:
-        form = UserCreationForm()
-    return render(request, 'accounts/signup.html', {'form': form})
+        form = CustomUserCreationForm()
+    context = {"form":form}
+    return render(request, "accounts/signup.html", context)
 
-# 로그인
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "Logged in successfully!")
-            return redirect('home')  # Replace 'home' with your desired redirect URL
-        else:
-            messages.error(request, "Invalid credentials!")
-            return redirect('login')
+@require_POST
+def delete(request):
+    if request.user.is_authenticated:
+        request.user.delete()
+        auth_logout(request)
+    return redirect("index")
 
-    return render(request, 'accounts/login.html')
+@require_http_methods(["GET", "POST"])
+def update(request):
+    if request.method == "POST":
+        form = CustomUserChangeForm(request.POST,instance=request.user) 
+        if form.is_valid():
+            form.save()
+            return redirect("index")
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = {"form":form}
+    return render(request, "accounts/update.html", context)
 
-# 로그아웃
-def logout_view(request):
-    logout(request)
-    messages.success(request, "Logged out successfully!")
-    return redirect('login')
+@login_required
+@require_http_methods(["GET", "POST"])
+def change_password(request):
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)
+            return redirect("index")
+    else:
+        form = PasswordChangeForm(request.user)
+    context = {"form": form}
+    return render(request, "accounts/change_password.html", context)

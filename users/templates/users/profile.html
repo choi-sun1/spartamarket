@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ member.username }}의 프로필</h1>
+
+    <div class="profile-info">
+        {% if member.profile_image %}
+            <img src="{{ member.profile_image.url }}" alt="Profile Image" class="profile-img">
+        {% else %}
+            <img src="/static/images/default_profile.png" alt="Profile Image" class="profile-img">
+        {% endif %}
+        <p>가입일: {{ member.date_joined|date:"Y-m-d" }}</p>
+        <p>팔로워: {{ member.follower_count }}명 / 팔로잉: {{ member.following_count }}명</p>
+    </div>
+
+    <h2>등록한 물품</h2>
+    <ul>
+        {% for product in my_products %}
+            <li><a href="{% url 'products:product_detail' product.pk %}">{{ product.title }}</a></li>
+        {% empty %}
+            <li>등록한 물품이 없습니다.</li>
+        {% endfor %}
+    </ul>
+
+    {% if request.user != member %}
+        <div class="follow-button">
+            <form action="{% url 'users:follow' member.pk %}" method="POST">
+                {% csrf_token %}
+                {% if request.user in member.followers.all %}
+                    <input type="submit" value="언팔로우">
+                {% else %}
+                    <input type="submit" value="팔로우">
+                {% endif %}
+            </form>
+        </div>
+    {% endif %}
+
+    <h2>찜한 물품</h2>
+    <ul>
+        {% for product in liked_products %}
+            <li><a href="{% url 'products:product_detail' product.pk %}">{{ product.title }}</a></li>
+        {% empty %}
+            <li>찜한 물품이 없습니다.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'index' %}">홈으로 돌아가기</a>
+{% endblock %}

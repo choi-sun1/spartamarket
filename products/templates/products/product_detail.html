@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>물품 상세 페이지</h2>
+
+    <h3>제목 : {{ product.title }}</h3>
+    <p>판매자 : {{ product.author.username }}</p>
+
+    <p>{{ product.content }}</p>
+    <p>작성시간 : {{ product.created_at }}</p>
+    <p>수정시간 : {{ product.updated_at}}</p>
+    <form action="{% url 'products:like' product.pk %}" method="POST">
+        {% csrf_token %}
+        {% if request.user in product.like_users.all %}
+            <input type="submit" value="찜 취소">
+        {% else %}
+            <input type="submit" value="찜하기">
+        {% endif %}
+    </form>
+
+    <a href="{% url 'products:products' %}">목록 보기 </a>
+    {% if request.user == product.author %}
+        <a href="{% url 'products:update' product.pk %}">수정하기 </a>
+        <form action="{% url 'products:delete' product.pk %}" method="POST">
+            {% csrf_token %}
+            <input type="submit" value="삭제">
+        </form>
+    {% endif %}
+
+
+{% endblock content %}

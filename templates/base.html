@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpartaMarket</title>
+</head>
+<body>
+    <div class="navbar">
+        {% if request.user.is_authenticated %}
+            <h3>안녕하세요, {{ request.user.username }}님</h3>
+            <nav>
+                <a href="{% url 'users:profile' request.user.username %}">내 프로필 보기</a>
+                <form action="{% url 'accounts:logout' %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit">로그아웃</button>
+                </form>
+                <button type="button" onclick="location.href='{% url 'accounts:update' %}'">회원정보 수정</button>
+                <form action="{% url 'accounts:delete' %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit">회원탈퇴</button>
+                </form>
+            </nav>
+        {% else %}
+            <a href="{% url 'accounts:login' %}">로그인</a>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        {% block content %}
+        {% endblock content %}
+    </div>
+</body>
+</html>

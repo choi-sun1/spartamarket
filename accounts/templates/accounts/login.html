@@ -1,11 +1,13 @@
-<h2>Login</h2>
-<form method="post">
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>로그인</h2>
+
+<form action="" method="POST">
     {% csrf_token %}
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
-    <br>
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-    <br>
+    {{ form.as_p }}
     <button type="submit">로그인</button>
 </form>
+<a href="{% url 'accounts:signup' %}">회원가입</a>
+
+{% endblock content %}
